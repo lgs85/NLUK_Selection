@@ -174,44 +174,48 @@ overdisp_fun <- function(model) {
 
 #Fledglings
 rs <- subset(rs,(!(is.na(N_Fledglings))))
-m2 <- glmmadmb(N_Fledglings~Sex+as.numeric(geno)*Pop+(1|Year),family = 'poisson',data=rs,zeroInflation = TRUE)
+m2 <- glmmadmb(N_Fledglings~Sex+as.numeric(geno)*Pop+(1|Year),family = 'poisson',data=rs,zeroInflation = FALSE)
+summary(m2)
+overdisp_fun(m2)
+
+m2 <- glmer(N_Recruits~Pop+Sex+as.numeric(geno)+(1|Year),family = 'poisson',data=subset(rs,N_Recruits>0))
+summary(m2)
+overdisp_fun(m2)
+
+m2 <- glmer(N_Fledglings~Sex+as.numeric(geno)*Pop+(1|Year)+(1|BirdID),family = 'poisson',data=rs)
 summary(m2)
 
-#Recruits
-rsf <- subset(rsf,(!(is.na(N_Recruits))))
-m2 <- glmmadmb(N_Recruits~as.numeric(geno)*Pop+(1|Year),family = 'poisson',data=rsf,zeroInflation = TRUE)
+
+
+
+rs$NF2 <- ifelse(rs$N_Fledglings>0,1,0)
+m2 <- glmmadmb(NF2~Sex+as.numeric(geno)*Pop+(1|Year),family = 'binomial',data=rs,zeroInflation = FALSE)
 summary(m2)
 
-#LRS
-m1 <- glmmadmb(LRS~as.numeric(geno)*Pop+(1|Year),family = 'poisson',data=lrsf,zeroInflation = TRUE)
-summary(m1)
-overdisp_fun(m1)
+m2 <- glmmadmb(N_Fledglings~as.numeric(geno)*Pop+(1|Year),family = 'poisson',data=subset(rs,Sex == 'F'),zeroInflation = FALSE)
+summary(m2)
 
 
 #####
-#Try running models including males
-#Fledglings
-rs <- subset(rs,(!(is.na(N_Fledglings))))
-m1 <- glmmadmb(N_Fledglings~Sex+as.numeric(geno)*Pop+(1|Year),family = 'poisson',data=rs,zeroInflation = TRUE)
+#Try running models with sex interaction just for Wytham
+
+rsw <- subset(rs,Pop == 'NL')
+m1 <- glmmadmb(N_Fledglings~Sex*as.numeric(geno)+(1|BirdID)+(1|Year),family = 'poisson',data=rsw,zeroInflation = TRUE)
 summary(m1)
 
-rsw <- subset(rs,Pop == 'UK')
-m1 <- glmmadmb(N_Fledglings~Sex*as.numeric(geno)+(1|Year),family = 'poisson',data=rsw,zeroInflation = TRUE)
+m1 <- glmer(N_Fledglings~as.numeric(geno)+(1|BirdID)+(1|Year),family = 'poisson',data=rsw)
 summary(m1)
+
+
+
+m1 <- glmer(N_Fledglings~Sex*as.numeric(geno)+(1|BirdID)+(1|Year),family = 'poisson',data=rsw,zeroInflation = TRUE)
+summary(m1)
+
 
 m1 <- glmmadmb(N_Fledglings~Sex+as.numeric(geno)+(1|Year),family = 'poisson',data=rsw,zeroInflation = TRUE)
 summary(m1)
 
 
-#Recruits
-rs <- subset(rs,(!(is.na(N_Recruits))))
-m2 <- glmmadmb(N_Recruits~Sex+as.numeric(geno)*Pop+(1|Year),family = 'poisson',data=rs,zeroInflation = TRUE)
-summary(m2)
-
-#LRS
-m3 <- glmmadmb(LRS~Sex+as.numeric(geno)*Pop+(1|Year),family = 'poisson',data=lrs,zeroInflation = TRUE)
-summary(m3)
-overdisp_fun(m1)
 
 
 rs$PopSex <- ifelse(rs$Pop == 'UK',
@@ -234,6 +238,18 @@ ggplot(rs,aes(x = geno,y = N_Fledglings,fill = PopSex))+
 
 
 
+temp <- subset(rs,N_Fledglings>0)
+
+ggplot(temp,aes(x = geno,y = N_Fledglings,fill = PopSex))+
+  geom_jitter(aes(col = PopSex),position = position_jitterdodge(jitter.width = 0.2,jitter.height = 0.1))+
+  geom_boxplot(alpha = 0.2,outlier.colour = NA,notch=T)+
+  theme_classic()+
+  theme(        axis.line.x = element_line(colour = 'black'),
+                axis.line.y = element_line(colour = 'black'))+
+  ylab('Number of fledglings')+
+  xlab('Genotype')+
+  scale_colour_manual(values = c('gold','darkgrey','black'))+
+  scale_fill_manual(values = c('gold','darkgrey','black'))
 
 
 
