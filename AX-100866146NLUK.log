@@ -1,0 +1,28 @@
+PLINK v1.90b3.26 64-bit (26 Nov 2015)
+Options in effect:
+  --autosome-num 36
+  --bfile ../Great tit HapMap/Plink/NLUK/NLUK
+  --extract AX-100866146.txt
+  --out AX-100866146NLUK
+  --recode
+
+Hostname: eduroam-216-119.uea.ac.uk
+Working directory: /Users/lewisspurgin/Documents/Research/NLUK_selection
+Start time: Thu Apr  7 17:08:17 2016
+
+Random number seed: 1460045297
+16384 MB RAM detected; reserving 8192 MB for main workspace.
+485122 variants loaded from .bim file.
+3015 samples (76 males, 2170 females, 769 ambiguous) loaded from .fam.
+Ambiguous sex IDs written to AX-100866146NLUK.nosex .
+1681 phenotype values loaded from .fam.
+--extract: 1 variant remaining.
+Using 1 thread (no multithreaded calculations invoked.
+Before main variant filters, 2223 founders and 792 nonfounders present.
+Calculating allele frequencies... done.
+Total genotyping rate is 0.99602.
+1 variant and 3015 samples pass filters and QC.
+Phenotype data is quantitative.
+--recode to AX-100866146NLUK.ped + AX-100866146NLUK.map ... done.
+
+End time: Thu Apr  7 17:08:17 2016

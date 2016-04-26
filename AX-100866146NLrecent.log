@@ -1,0 +1,31 @@
+PLINK v1.90b3.26 64-bit (26 Nov 2015)
+Options in effect:
+  --allow-extra-chr
+  --autosome-num 36
+  --extract AX-100866146.txt
+  --file NL_bill_recent
+  --out AX-100866146NLrecent
+  --recode
+
+Hostname: eduroam-216-119.uea.ac.uk
+Working directory: /Users/lewisspurgin/Documents/Research/NLUK_selection
+Start time: Thu Apr  7 17:08:17 2016
+
+Random number seed: 1460045297
+16384 MB RAM detected; reserving 8192 MB for main workspace.
+Scanning .ped file... done.
+Performing single-pass .bed write (387670 variants, 278 samples).
+--file: AX-100866146NLrecent-temporary.bed + AX-100866146NLrecent-temporary.bim
++ AX-100866146NLrecent-temporary.fam written.
+387670 variants loaded from .bim file.
+278 samples (0 males, 278 females) loaded from .fam.
+--extract: 1 variant remaining.
+Using 1 thread (no multithreaded calculations invoked.
+Before main variant filters, 278 founders and 0 nonfounders present.
+Calculating allele frequencies... done.
+Total genotyping rate is 0.992806.
+1 variant and 278 samples pass filters and QC.
+Note: No phenotypes present.
+--recode to AX-100866146NLrecent.ped + AX-100866146NLrecent.map ... done.
+
+End time: Thu Apr  7 17:08:21 2016
