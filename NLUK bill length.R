@@ -79,21 +79,15 @@ genos$PopSex <- ifelse(genos$Pop == 'UK',
                               'UK (females)'),
                        'NL (females)')
 
-#Plot Bill length vs genotype for both pops
-ggplot(genos,aes(x = geno,y = BillLength,fill = PopSex))+
-  geom_jitter(aes(col = PopSex),position = position_jitterdodge(jitter.width = 0.2))+
-  geom_boxplot(alpha = 0.2,outlier.colour = NA)+
-  theme_classic()+
-  theme(        axis.line.x = element_line(colour = 'black'),
-                axis.line.y = element_line(colour = 'black'))+
-  ylab('Bill length (mm)')+
-  xlab('Genotype')+
-  scale_colour_manual(values = c('gold','darkgrey','black'))+
-  scale_fill_manual(values = c('gold','darkgrey','black'))
+genos$geno_n <- as.numeric(genos$geno)
 
-summary(lm(BillLength~as.numeric(geno)+Pop,data=genos))
-summary(lm(BillLength~as.numeric(geno),data=subset(genos,Pop == 'NL')))
-summary(lm(BillLength~as.numeric(geno),data=subset(genos,Pop == 'UK')))
+
+#Write to file
+write.csv(genos,'NLUK_genotypes_and_bill_length.csv',row.names = F)
+
+
+
+
 
 
 
@@ -135,9 +129,6 @@ for(i in 1:nrow(rs))
 }
 
 
-rs <- subset(rs,!(is.na(rs$geno)))
-#rs <- subset(rs,!(is.na(rs$haplo)))
-
 rs <- subset(rs,geno != '00')
 rs$geno <- factor(rs$geno,levels = c('TT','CT','CC'))
 
@@ -150,141 +141,13 @@ lrs <- ddply(rs,
 lrs$Year <- factor(lrs$Year)
 
 
-
-
-overdisp_fun <- function(model) {
-  ## number of variance parameters in 
-  ##   an n-by-n variance-covariance matrix
-  vpars <- function(m) {
-    nrow(m)*(nrow(m)+1)/2
-  }
-  model.df <- sum(sapply(VarCorr(model),vpars))+length(fixef(model))
-  rdf <- nrow(model.frame(model))-model.df
-  rp <- residuals(model,type="pearson")
-  Pearson.chisq <- sum(rp^2)
-  prat <- Pearson.chisq/rdf
-  pval <- pchisq(Pearson.chisq, df=rdf, lower.tail=FALSE)
-  c(chisq=Pearson.chisq,ratio=prat,rdf=rdf,p=pval)
-}
-
-
-
-
-#MODELS
-
-#Fledglings
-rs <- subset(rs,(!(is.na(N_Fledglings))))
-m2 <- glmmadmb(N_Fledglings~Sex+as.numeric(geno)*Pop+(1|Year),family = 'poisson',data=rs,zeroInflation = FALSE)
-summary(m2)
-overdisp_fun(m2)
-
-m2 <- glmer(N_Recruits~Pop+Sex+as.numeric(geno)+(1|Year),family = 'poisson',data=subset(rs,N_Recruits>0))
-summary(m2)
-overdisp_fun(m2)
-
-m2 <- glmer(N_Fledglings~Sex+as.numeric(geno)*Pop+(1|Year)+(1|BirdID),family = 'poisson',data=rs)
-summary(m2)
-
-
-
-
-rs$NF2 <- ifelse(rs$N_Fledglings>0,1,0)
-m2 <- glmmadmb(NF2~Sex+as.numeric(geno)*Pop+(1|Year),family = 'binomial',data=rs,zeroInflation = FALSE)
-summary(m2)
-
-m2 <- glmmadmb(N_Fledglings~as.numeric(geno)*Pop+(1|Year),family = 'poisson',data=subset(rs,Sex == 'F'),zeroInflation = FALSE)
-summary(m2)
-
-
-#####
-#Try running models with sex interaction just for Wytham
-
-rsw <- subset(rs,Pop == 'NL')
-m1 <- glmmadmb(N_Fledglings~Sex*as.numeric(geno)+(1|BirdID)+(1|Year),family = 'poisson',data=rsw,zeroInflation = TRUE)
-summary(m1)
-
-m1 <- glmer(N_Fledglings~as.numeric(geno)+(1|BirdID)+(1|Year),family = 'poisson',data=rsw)
-summary(m1)
-
-
-
-m1 <- glmer(N_Fledglings~Sex*as.numeric(geno)+(1|BirdID)+(1|Year),family = 'poisson',data=rsw,zeroInflation = TRUE)
-summary(m1)
-
-
-m1 <- glmmadmb(N_Fledglings~Sex+as.numeric(geno)+(1|Year),family = 'poisson',data=rsw,zeroInflation = TRUE)
-summary(m1)
-
-
-
-
 rs$PopSex <- ifelse(rs$Pop == 'UK',
                        ifelse(rs$Sex == 'M',
                               'UK (males)',
                               'UK (females)'),
                        'NL (females)')
 
-#Plot Fledglings vs genotype for both pops
-ggplot(rs,aes(x = geno,y = N_Fledglings,fill = PopSex))+
-  geom_jitter(aes(col = PopSex),position = position_jitterdodge(jitter.width = 0.2,jitter.height = 0.1))+
-  geom_boxplot(alpha = 0.2,outlier.colour = NA)+
-  theme_classic()+
-  theme(        axis.line.x = element_line(colour = 'black'),
-                axis.line.y = element_line(colour = 'black'))+
-  ylab('Number of fledglings')+
-  xlab('Genotype')+
-  scale_colour_manual(values = c('gold','darkgrey','black'))+
-  scale_fill_manual(values = c('gold','darkgrey','black'))
-
-
-
-temp <- subset(rs,N_Fledglings>0)
-
-ggplot(temp,aes(x = geno,y = N_Fledglings,fill = PopSex))+
-  geom_jitter(aes(col = PopSex),position = position_jitterdodge(jitter.width = 0.2,jitter.height = 0.1))+
-  geom_boxplot(alpha = 0.2,outlier.colour = NA,notch=T)+
-  theme_classic()+
-  theme(        axis.line.x = element_line(colour = 'black'),
-                axis.line.y = element_line(colour = 'black'))+
-  ylab('Number of fledglings')+
-  xlab('Genotype')+
-  scale_colour_manual(values = c('gold','darkgrey','black'))+
-  scale_fill_manual(values = c('gold','darkgrey','black'))
 
 
 
 
-
-
-
-
-
-dd <- read.table('../Great tit HapMap/BayeScEnv/MAF across pops/Collagen_AX-100866146_freq.txt',
-                 header = T)
-dd$UK <- ifelse(dd$POP %in% c('Wytham_UK','Cambridge_UK','Loch_Lomond_Scotland'),'UK','NOTUK')
-
-dd$Freq <- dd$COUNT1/(dd$COUNT1+dd$COUNT2)
-mylevs <- dd$POP[c(18,2,6,1,3:5,7:17,19:23)]
-dd$POP <- factor(dd$POP,levels=mylevs)
-
-quartz(width=7,height=5,pointsize=12,dpi=100)
-ggplot(dd,aes(x = POP,y = Freq,fill=UK))+
-  geom_bar(stat='identity')+
-  theme_classic()+
-  theme(axis.text.x = element_text(angle = 90))+
-  xlab('')+
-  ylab('Frequency of C allele')+
-  theme(legend.position = 'none')+
-  scale_fill_manual(values = c('gold','darkgrey'))
-
-
-
-
-
-
-
-
-
-m2 <- glmmadmb(N_Fledglings~X1_1+(1|Year),family = 'poisson',data=subset(rs,!is.na(X1_1)),zeroInflation = TRUE)
-
-summary(m2)
