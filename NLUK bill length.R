@@ -133,20 +133,27 @@ rs <- subset(rs,geno != '00')
 rs$geno <- factor(rs$geno,levels = c('TT','CT','CC'))
 
 
+
+rs$PopSex <- ifelse(rs$Pop == 'UK',
+                    ifelse(rs$Sex == 'M',
+                           'UK (males)',
+                           'UK (females)'),
+                    'NL (females)')
+
+
+write.csv(rs, 'NLUK_Reproductive_success_and_genotype.csv',row.names =  F)
+
+
+
+
 lrs <- ddply(rs,
-             .(BirdID,geno,X33_1,Pop,Sex),
+             .(BirdID,geno,X33_1,Pop,Sex,PopSex),
              summarise,
              LRS = sum(N_Recruits,na.rm=T),
              Year = min(as.numeric(paste(Year)),na.rm=T))
 lrs$Year <- factor(lrs$Year)
 
-
-rs$PopSex <- ifelse(rs$Pop == 'UK',
-                       ifelse(rs$Sex == 'M',
-                              'UK (males)',
-                              'UK (females)'),
-                       'NL (females)')
-
+write.csv(lrs, 'NLUK_Lifetime_reproductive_success_and_genotype.csv',row.names =  F)
 
 
 
