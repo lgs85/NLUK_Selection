@@ -17,6 +17,8 @@ haps <- read.table('Counts_all_Haps_all_Indis.txt',header = T,stringsAsFactors =
 wrs <- read.csv('Wytham_reprod_success.csv',stringsAsFactors = F)
 nrs <- read.csv('NL_reprod_success.csv',stringsAsFactors = F)
 NLid <- read.csv('NL_codes.csv',stringsAsFactors = F)
+feed <- read.csv('seedvariationdata_final_wks.csv',stringsAsFactors = F)
+feed710<- read.csv('Lewis 2007-2010 seeds.csv',stringsAsFactors = F)
 
 NLid <- subset(NLid,!(duplicated(RingNumber)))
 
@@ -79,7 +81,7 @@ genos$PopSex <- ifelse(genos$Pop == 'UK',
                               'UK (females)'),
                        'NL (females)')
 
-genos$geno_n <- as.numeric(genos$geno)
+genos$geno_n <- as.numeric(genos$geno)-1
 
 
 #Write to file
@@ -157,4 +159,60 @@ write.csv(lrs, 'NLUK_Lifetime_reproductive_success_and_genotype.csv',row.names =
 
 
 
+# Genotype and feeding behaviour ------------------------------------------
 
+feed <- subset(feed,sp == 'G')
+feed710$ring <- toupper(feed710$ring)
+
+cols <- intersect(colnames(feed),colnames(feed710))
+
+feedx <- rbind(feed[,cols],feed710[,cols])
+
+
+inboth <- intersect(geno1$V2,feedx$ring)
+
+feed2 <- subset(feedx,ring %in% inboth)
+
+geno1$geno <- with(geno1,paste0(V7,V8))
+
+for(i in 1:nrow(feed2))
+{
+  feed2$geno[i] <- subset(geno1,as.character(paste(V2)) == as.character(paste(feed2$ring[i])))$geno
+}
+
+
+head(feed2)
+
+feed2$rate <- with(feed2,seeds/recs)
+
+head(feed2) 
+
+
+
+
+table(feed710$yr)
+feed2 <- subset(feed2,geno !='00')
+
+boxplot(seeds~(geno),data=subset(feed2,yr == 2013))
+
+
+boxplot(recs~(geno),data=feed2)
+boxplot(rate~(geno),data=feed2)
+
+feed2$genon <- as.numeric(factor(feed2$geno))
+
+summary(lm(seeds~genon*yr,data=feed2))
+summary(lm(seeds~genon,data=subset(feed2,yr %in% c(2009,2010))))
+summary(lm(rate~genon,data=feed2))
+
+
+m1 <- lmer(log(recs)~genon+(1|ring),data=subset(feed2,yr %in% c(2007,2008,2009,2010)))
+summary(m1)
+confint.merMod(m1)
+
+plot(seeds~recs,data=subset(feed2))
+
+ggplot(subset(feed2,yr<2011),aes(x = factor(yr), y = log(recs),col = geno))+
+  geom_boxplot(notch=T)
+
+tapply(feed2$ring,feed2$yr,function(x) length(unique(x)))

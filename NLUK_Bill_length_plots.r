@@ -77,3 +77,6 @@ m3 <- glmmadmb(N_Fledglings~Sex + as.numeric(geno)*Pop + (1|Year) + (1|BirdID),
                zeroInflation = FALSE)
 summary(m3) #Interaction significant - so it's the number of fledglings, not a presence/abssence effect
 
+
+
+
