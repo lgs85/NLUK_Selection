@@ -163,15 +163,25 @@ write.csv(lrs, 'NLUK_Lifetime_reproductive_success_and_genotype.csv',row.names =
 
 feed <- subset(feed,sp == 'G')
 feed710$ring <- toupper(feed710$ring)
+head(feed710)
 
-cols <- intersect(colnames(feed),colnames(feed710))
+feed710$month <- as.numeric(sapply(feed710$date,function(x) strsplit(x,split = '-')[[1]][2]))
+feed710$season <- NA
 
-feedx <- rbind(feed[,cols],feed710[,cols])
+for(i in 1:nrow(feed710))
+{
+  if(feed710$month[i] > 6)
+  {
+    feed710$season[i] <- paste0(feed710$yr[i],'-',feed710$yr[i]+1)
+  } else
+  {
+    feed710$season[i] <- paste0(feed710$yr[i]-1,'-',feed710$yr[i])
+  }
+}
 
 
-inboth <- intersect(geno1$V2,feedx$ring)
-
-feed2 <- subset(feedx,ring %in% inboth)
+inboth <- intersect(geno1$V2,feed710$ring)
+feed2 <- subset(feed710,ring %in% inboth)
 
 geno1$geno <- with(geno1,paste0(V7,V8))
 
@@ -181,7 +191,6 @@ for(i in 1:nrow(feed2))
 }
 
 
-head(feed2)
 
 feed2$rate <- with(feed2,seeds/recs)
 
@@ -190,29 +199,30 @@ head(feed2)
 
 
 
-table(feed710$yr)
+table(feed710$season)
 feed2 <- subset(feed2,geno !='00')
 
-boxplot(seeds~(geno),data=subset(feed2,yr == 2013))
-
-
-boxplot(recs~(geno),data=feed2)
-boxplot(rate~(geno),data=feed2)
 
 feed2$genon <- as.numeric(factor(feed2$geno))
 
-summary(lm(seeds~genon*yr,data=feed2))
+summary(lm(log(seeds)~genon*season,data=feed2))
 summary(lm(seeds~genon,data=subset(feed2,yr %in% c(2009,2010))))
 summary(lm(rate~genon,data=feed2))
 
 
-m1 <- lmer(log(recs)~genon+(1|ring),data=subset(feed2,yr %in% c(2007,2008,2009,2010)))
+m1 <- lmer(log(recs)~month+genon*season+(1|ring),data=feed2)
 summary(m1)
 confint.merMod(m1)
 
 plot(seeds~recs,data=subset(feed2))
 
-ggplot(subset(feed2,yr<2011),aes(x = factor(yr), y = log(recs),col = geno))+
+ggplot(feed2,aes(x = season, y = log(recs),col = geno))+
+  geom_jitter(aes(col = geno),position = position_jitterdodge(jitter.width = 0.2))+
   geom_boxplot(notch=T)
 
-tapply(feed2$ring,feed2$yr,function(x) length(unique(x)))
+
+ggplot(feed2,aes(col = season, y = log(recs),x = factor(month)))+
+  geom_jitter(aes(col = season),position = position_jitterdodge(jitter.width = 0.2))+
+  geom_boxplot(notch=T)
+
+tapply(feed2$ring,feed2$season,function(x) length(unique(x)))
