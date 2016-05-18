@@ -1,0 +1,10 @@
+PLINK v1.90b3 64-bit (11 Jan 2015)
+7 arguments: --bfile NLUK --keep NLUK_bill_length_birds.txt --make-bed --output NLUK_bill_length_birds
+Hostname: C02R10QDGG7N
+Working directory: /Users/x0504807/Documents/Research/NLUK_selection
+Start time: Wed May 18 17:05:27 2016
+
+Error: Unrecognized flag ('--output').
+For more information, try 'plink --help [flag name]' or 'plink --help | more'.
+
+End time: Wed May 18 17:05:27 2016

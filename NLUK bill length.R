@@ -70,6 +70,7 @@ geno3 <- geno3[order(geno3$V2),]
 
 genos <- temp
 genos$geno <- geno3$geno
+genos$o_pop <- geno3$V1
 
 genos <- subset(genos,geno != '00')
 genos <- subset(genos,BillLength < 15)
@@ -86,7 +87,7 @@ genos$geno_n <- as.numeric(genos$geno)-1
 
 #Write to file
 write.csv(genos,'NLUK_genotypes_and_bill_length.csv',row.names = F)
-
+write.table(genos[,c('o_pop','BirdID')],'NLUK_bill_length_birds.txt',row.names = F,col.names = F,quote = F)
 
 
 
@@ -220,9 +221,32 @@ ggplot(feed2,aes(x = season, y = log(recs),col = geno))+
   geom_jitter(aes(col = geno),position = position_jitterdodge(jitter.width = 0.2))+
   geom_boxplot(notch=T)
 
+d910 <- subset(feed2,season == "2009-2010")
+dother <- subset(feed2,season != "2009-2010") 
 
-ggplot(feed2,aes(col = season, y = log(recs),x = factor(month)))+
-  geom_jitter(aes(col = season),position = position_jitterdodge(jitter.width = 0.2))+
-  geom_boxplot(notch=T)
+inboth <- intersect(d910$ring,dother$ring)
 
-tapply(feed2$ring,feed2$season,function(x) length(unique(x)))
+feed3 <- subset(feed2,ring %in% inboth)
+feed3$season1 <- ifelse(feed3$season == '2009-2010',10,8)
+
+temp <- ddply(feed3,
+              .(ring,season1,geno),
+              summarize,
+              recs = mean(recs))
+
+
+
+ggplot(temp,aes(x = season1,y = recs,col = geno))+
+  geom_point()+
+  geom_line(aes(group = ring))
+
+d8 <- subset(temp,season1 == 8)
+d10 <- subset(temp,season1 == 10)
+
+d10$diff <- d10$recs-d8$recs
+
+
+boxplot(diff~geno,data=d10,
+        ylab = 'change in visit time in 2009-2010')
+
+summary(lm(diff~as.numeric(factor(geno)),data=d10))
