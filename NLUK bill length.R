@@ -17,7 +17,7 @@ haps <- read.table('Counts_all_Haps_all_Indis.txt',header = T,stringsAsFactors =
 wrs <- read.csv('Wytham_reprod_success.csv',stringsAsFactors = F)
 nrs <- read.csv('NL_reprod_success.csv',stringsAsFactors = F)
 NLid <- read.csv('NL_codes.csv',stringsAsFactors = F)
-feed <- read.csv('seedvariationdata_final_wks.csv',stringsAsFactors = F)
+feed1115 <- read.csv('Lewis 2011-2015 seeds.csv',stringsAsFactors = F)
 feed710<- read.csv('Lewis 2007-2010 seeds.csv',stringsAsFactors = F)
 
 NLid <- subset(NLid,!(duplicated(RingNumber)))
@@ -161,36 +161,32 @@ write.csv(lrs, 'NLUK_Lifetime_reproductive_success_and_genotype.csv',row.names =
 
 
 # Genotype and feeding behaviour ------------------------------------------
-
-feed <- subset(feed,sp == 'G')
-feed710$ring <- toupper(feed710$ring)
-head(feed710)
-
-feed710$month <- as.numeric(sapply(feed710$date,function(x) strsplit(x,split = '-')[[1]][2]))
-feed710$season <- NA
-
-for(i in 1:nrow(feed710))
-{
-  if(feed710$month[i] > 6)
-  {
-    feed710$season[i] <- paste0(feed710$yr[i],'-',feed710$yr[i]+1)
-  } else
-  {
-    feed710$season[i] <- paste0(feed710$yr[i]-1,'-',feed710$yr[i])
-  }
-}
+feedx <- rbind(feed710[,2:5],feed1115[,2:5])
 
 
-inboth <- intersect(geno1$V2,feed710$ring)
-feed2 <- subset(feed710,ring %in% inboth)
 
+feedx$month <- as.numeric(sapply(feedx$date,function(x) strsplit(x,split = '-')[[1]][2]))
+feedx$yr <- as.numeric(sapply(feedx$date,function(x) strsplit(x,split = '-')[[1]][1]))
+
+feedx$ring <- toupper(feedx$ring)
+
+
+inboth <- intersect(geno1$V2,feedx$ring)
+feed2 <- subset(feedx,ring %in% inboth)
 geno1$geno <- with(geno1,paste0(V7,V8))
+feed2$season <- NA
 
 for(i in 1:nrow(feed2))
 {
+  if(feed2$month[i] > 6)
+  {
+    feed2$season[i] <- paste0(feed2$yr[i],'-',feed2$yr[i]+1)
+  } else
+  {
+    feed2$season[i] <- paste0(feed2$yr[i]-1,'-',feed2$yr[i])
+  }
   feed2$geno[i] <- subset(geno1,as.character(paste(V2)) == as.character(paste(feed2$ring[i])))$geno
 }
-
 
 
 feed2$rate <- with(feed2,seeds/recs)
@@ -200,7 +196,7 @@ head(feed2)
 
 
 
-table(feed710$season)
+table(feed2$season)
 feed2 <- subset(feed2,geno !='00')
 
 
@@ -215,11 +211,15 @@ m1 <- lmer(log(recs)~month+genon*season+(1|ring),data=feed2)
 summary(m1)
 confint.merMod(m1)
 
-plot(seeds~recs,data=subset(feed2))
-
-ggplot(feed2,aes(x = season, y = log(recs),col = geno))+
+ggplot(feed2,aes(x = season, y = seeds,fill = geno))+
   geom_jitter(aes(col = geno),position = position_jitterdodge(jitter.width = 0.2))+
-  geom_boxplot(notch=T)
+  geom_boxplot(notch=F,alpha = 0,col = 'black',outlier.colour = NA)+
+  theme_bw()
+
+
+
+
+
 
 d910 <- subset(feed2,season == "2009-2010")
 dother <- subset(feed2,season != "2009-2010") 
@@ -250,3 +250,5 @@ boxplot(diff~geno,data=d10,
         ylab = 'change in visit time in 2009-2010')
 
 summary(lm(diff~as.numeric(factor(geno)),data=d10))
+
+tapply(feed2$ring,list(feed2$geno,feed2$season),function(x) length(unique(x)))
