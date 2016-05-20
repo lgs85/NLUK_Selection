@@ -53,7 +53,8 @@ temp <- data.frame(BirdID = c(W$bto_ring,NL$BirdID),
                    Pop = c(rep('UK',nrow(W)),
                            rep('NL',nrow(NL))),
                    BillLength = c(W$bill_length,NL$BillLength2_gos),
-                   Sex = c(W$sex,rep('F',nrow(NL))))
+                   Sex = c(W$sex,rep('F',nrow(NL))),
+                   Ringer = c(W$initials,rep('NL1',nrow(NL))))
 
 temp <- subset(temp,!(is.na(temp$BillLength)))
 
@@ -188,6 +189,10 @@ for(i in 1:nrow(feed2))
   feed2$geno[i] <- subset(geno1,as.character(paste(V2)) == as.character(paste(feed2$ring[i])))$geno
 }
 
+feed2$cenrecs <- log(feed2$recs)-tapply(feed2$recs,feed2$season,function(x) mean(log(x)))[feed2$season] 
+feed2$censeeds <- log(feed2$seeds)-tapply(feed2$seeds,feed2$season,function(x) mean(log(x)))[feed2$season] 
+
+
 
 feed2$rate <- with(feed2,seeds/recs)
 
@@ -202,53 +207,45 @@ feed2 <- subset(feed2,geno !='00')
 
 feed2$genon <- as.numeric(factor(feed2$geno))
 
-summary(lm(log(seeds)~genon*season,data=feed2))
-summary(lm(seeds~genon,data=subset(feed2,yr %in% c(2009,2010))))
+summary(lm(censeeds~genon+season,data=feed2))
+summary(lm(cenrecs~genon+season,data=feed2))
 summary(lm(rate~genon,data=feed2))
 
 
-m1 <- lmer(log(recs)~month+genon*season+(1|ring),data=feed2)
-summary(m1)
+m1 <- lmer(cenrecs~month+genon*season+(1|ring)+(1),data=feed2)
+m2 <- lmer(cenrecs~month+genon+season+(1|ring),data=feed2)
+
+anova(m1,m2)
 confint.merMod(m1)
 
-ggplot(feed2,aes(x = season, y = seeds,fill = geno))+
+
+temp <- ddply(feed2,
+              .(ring,season,geno,genon),
+              summarise,
+              recs = mean(cenrecs),
+              seeds = mean(censeeds),
+              rate = mean(rate),
+              n= length(cenrecs))
+
+hist(temp$n,breaks = 100)
+
+temp <- subset(temp,recs > -1.5)
+
+anova(lm(recs~genon+season,data=temp))
+
+
+
+ggplot(temp,aes(x = season, y = recs,fill = geno))+
   geom_jitter(aes(col = geno),position = position_jitterdodge(jitter.width = 0.2))+
   geom_boxplot(notch=F,alpha = 0,col = 'black',outlier.colour = NA)+
   theme_bw()
 
+ggplot(temp,aes(x = season, y = seeds,fill = geno))+
+  geom_jitter(aes(col = geno),position = position_jitterdodge(jitter.width = 0.2))+
+  geom_boxplot(notch=F,alpha = 0,col = 'black',outlier.colour = NA)+
+  theme_bw()
 
-
-
-
-
-d910 <- subset(feed2,season == "2009-2010")
-dother <- subset(feed2,season != "2009-2010") 
-
-inboth <- intersect(d910$ring,dother$ring)
-
-feed3 <- subset(feed2,ring %in% inboth)
-feed3$season1 <- ifelse(feed3$season == '2009-2010',10,8)
-
-temp <- ddply(feed3,
-              .(ring,season1,geno),
-              summarize,
-              recs = mean(recs))
-
-
-
-ggplot(temp,aes(x = season1,y = recs,col = geno))+
+ggplot(temp,aes(x = recs, y = seeds,col = geno))+
   geom_point()+
-  geom_line(aes(group = ring))
-
-d8 <- subset(temp,season1 == 8)
-d10 <- subset(temp,season1 == 10)
-
-d10$diff <- d10$recs-d8$recs
-
-
-boxplot(diff~geno,data=d10,
-        ylab = 'change in visit time in 2009-2010')
-
-summary(lm(diff~as.numeric(factor(geno)),data=d10))
-
-tapply(feed2$ring,list(feed2$geno,feed2$season),function(x) length(unique(x)))
+  stat_smooth(method = 'lm')+
+  theme_bw()

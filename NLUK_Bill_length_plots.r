@@ -75,8 +75,13 @@ m3 <- glmmadmb(N_Fledglings~Sex + as.numeric(geno)*Pop + (1|Year) + (1|BirdID),
                family = 'gaussian',
                data=subset(dd1,NF2 == 1),
                zeroInflation = FALSE)
-summary(m3) #Interaction significant - so it's the number of fledglings, not a presence/abssence effect
+summary(m3) #Interaction significant - so it's the number of fledglings, not a presence/absence effect
 
 
 
+
+
+
+
+tapply(dd$BillLength,list(dd$geno,dd$Ringer),length)
 
