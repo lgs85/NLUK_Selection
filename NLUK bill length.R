@@ -249,3 +249,11 @@ ggplot(temp,aes(x = recs, y = seeds,col = geno))+
   geom_point()+
   stat_smooth(method = 'lm')+
   theme_bw()
+
+
+
+
+
+
+
+
