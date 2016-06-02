@@ -1,0 +1,208 @@
+---
+title: "GT feeding"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+rm(list=ls())
+library(data.table)
+library(ggplot2)
+library(plyr)
+library(RMark)
+library(lme4)
+library(glmmADMB)
+library(GenABEL)
+library(knitr)
+library(Rmisc)
+
+knitr::opts_chunk$set(echo = FALSE,fig.width = 7, fig.height = 8)
+
+
+wsurv <- read.csv('Wytham_survival.csv',colClasses = 'character')
+W <- read.csv('Wytham_morphometrics.csv',stringsAsFactors = F)
+geno1 <- fread('AX-100866146NLUK.ped',stringsAsFactors = F)
+haps <- read.table('Counts_all_Haps_all_Indis.txt',header = T,stringsAsFactors = F)
+feed1115 <- read.csv('Lewis 2011-2015 seeds.csv',stringsAsFactors = F)
+feed710<- read.csv('Lewis 2007-2010 seeds.csv',stringsAsFactors = F)
+
+haps$haplosum <- apply(haps[,2:ncol(haps)],1,sum)
+
+# Genotype and feeding behaviour ------------------------------------------
+feedx <- rbind(feed710[,2:5],feed1115[,2:5])
+
+feedx$month <- as.numeric(sapply(feedx$date,function(x) strsplit(x,split = '-')[[1]][2]))
+feedx$yr <- as.numeric(sapply(feedx$date,function(x) strsplit(x,split = '-')[[1]][1]))
+
+feedx$ring <- toupper(feedx$ring)
+
+inboth <- intersect(geno1$V2,feedx$ring)
+feed2 <- subset(feedx,ring %in% inboth)
+geno1$geno <- with(geno1,paste0(V7,V8))
+feed2$season <- NA
+feed2$haplosum <- NA
+feed2$sex <- NA
+W2 <- subset(W,sex != '')
+W2$sex <- toupper(W2$sex)
+
+for(i in 1:nrow(feed2))
+{
+  if(feed2$month[i] > 6)
+  {
+    feed2$season[i] <- paste0(feed2$yr[i],'-',feed2$yr[i]+1)
+  } else
+  {
+    feed2$season[i] <- paste0(feed2$yr[i]-1,'-',feed2$yr[i])
+  }
+  feed2$geno[i] <- subset(geno1,as.character(paste(V2)) == as.character(paste(feed2$ring[i])))$geno
+  if(feed2$ring[i] %in% haps$ID)
+  {
+    feed2$haplosum[i] <- subset(haps,ID == feed2$ring[i])$haplosum
+  }
+  if(feed2$ring[i] %in% W2$bto_ring)
+  {
+    feed2$sex[i] <- subset(W2,bto_ring == feed2$ring[i])$sex[1]
+  }
+}
+
+feed2$o_month <- sapply(feed2$month,function(x) ifelse(x<7,x+12,x)-7)
+
+feed2$cenrecs <- c(feed2$recs-tapply(feed2$recs,feed2$season,function(x) mean(x))[feed2$season])
+feed2$censeeds <- c(feed2$seeds-tapply(feed2$seeds,feed2$season,function(x) mean(x))[feed2$season])
+feed2$rate <- with(feed2,lm(seeds~recs)$residuals)
+feed2 <- subset(feed2,geno !='00')
+
+feed2$genon <- as.numeric(factor(feed2$geno))
+feed2$RowID <- c(1:nrow(feed2))
+
+feed3 <- subset(feed2,season %in% c('2007-2008','2008-2009','2009-2010'))
+feed4 <- subset(feed2,!(season %in% c('2007-2008','2008-2009','2009-2010')))
+```
+
+
+Using all data - we find that the seed consumption data still differs massively across the methods - 2007-10 used the old method, 2011-15 used the new method. The top panel below is all records (lots of repeats for each bird), while on the bottom I've used the mean number of records per bird. We can also see that sample sizes in the later years, especially in terms of numbers of unique birds, is very low. 
+
+```{r Fig 1, echo=FALSE}
+
+temp <- ddply(feed2,
+              .(ring,season,geno,genon,haplosum),
+              summarise,
+              seeds = median(seeds),
+              month = mean(month),
+              n= length(seeds))
+
+Fig1A <- ggplot(feed2,aes(x = season, y = seeds,fill = geno))+
+  geom_jitter(aes(col = geno),position = position_jitterdodge(jitter.width = 0.2),shape = 1)+
+  geom_boxplot(alpha = 0,outlier.colour = NA,coef = 0)+
+  theme_bw()
+
+Fig1B <- ggplot(temp,aes(x = season, y = seeds,fill = geno))+
+  geom_jitter(aes(col = geno),position = position_jitterdodge(jitter.width = 0.2),shape = 1)+
+  geom_boxplot(alpha = 0,outlier.colour = NA,coef = 0)+
+  theme_bw()
+
+multiplot(Fig1A,Fig1B)
+
+```
+
+We can get around the systematic differences a bit by mean centring the feeding data within years. However, there is still something quite different about the distributions, and the sample size in unique birds for the later years is small.
+
+```{r Fig 2, echo=FALSE}
+
+temp <- ddply(feed2,
+              .(ring,season,geno,genon,haplosum),
+              summarise,
+              censeeds = median(censeeds),
+              month = mean(month),
+              n= length(seeds))
+
+
+Fig2A <- ggplot(feed2,aes(x = season, y = censeeds,fill = geno))+
+  geom_jitter(aes(col = geno),position = position_jitterdodge(jitter.width = 0.2),shape = 1)+
+  geom_boxplot(alpha = 0,outlier.colour = NA,coef = 0)+
+  theme_bw()
+
+Fig2B <- ggplot(temp,aes(x = season, y = censeeds,fill = geno))+
+  geom_jitter(aes(col = geno),position = position_jitterdodge(jitter.width = 0.2),shape = 1)+
+  geom_boxplot(alpha = 0,outlier.colour = NA,coef = 0)+
+  theme_bw()
+
+multiplot(Fig2A,Fig2B)
+
+```
+
+I suggest that we only include the years 2007-2010, as data for these are all collected using the same method, and sample size is pretty good. Here is feeding records against genotype for those three years. It seems pretty clear that there is an effect of genotype on feeding, but only in 2009-2010. Note that the effect is in the opposite direction to what we may predict (but what Jon predicted) - long-billed genotype (CC) birds spend less time on feeders (but only in one year). Does this indicate efficiency, or is it too weak to say anything?:
+
+```{r Fig 3, echo=FALSE}
+
+temp <- ddply(feed3,
+              .(ring,season,geno,genon,haplosum),
+              summarise,
+              seeds = mean(seeds),
+              month = mean(month),
+              n= length(seeds))
+temp <- subset(temp,seeds<40)
+
+Fig3A <- ggplot(feed3,aes(x = season, y = seeds,fill = geno))+
+  geom_jitter(aes(col = geno),position = position_jitterdodge(jitter.width = 0.2),shape = 1)+
+  geom_boxplot(alpha = 0,outlier.colour = NA,coef = 0)+
+  theme_bw()
+
+Fig3B <- ggplot(temp,aes(x = season, y = seeds,fill = geno))+
+  geom_jitter(aes(col = geno),position = position_jitterdodge(jitter.width = 0.2),shape = 1)+
+  geom_boxplot(alpha = 0,outlier.colour = NA,coef = 0)+
+  theme_bw()
+
+multiplot(Fig3A,Fig3B)
+
+```
+
+<br><br>
+Test this using mixed models. First test if there's an overall effect of genotype on feeding, using a GLMM. I'll model genotype as a continuous variable (0 = CC, 1 = CT and 2 = TT) to reduce the degrees fo freedom. I'll also include sex and month (ordinal, from start of winter) as fixed effects, and season and BirdID as random effects. I've also included an observation-level random effect to deal with overdispersion.
+
+```{r M1}
+
+m1 <- glmer(seeds~genon+sex+o_month+(1|ring)+(1|season)+(1|RowID),data=feed3,family = poisson) 
+summary(m1)
+```
+
+
+<br><br>
+We get the same thing if we use the recent data - although, weirdly, the month effect reverses.
+
+```{r M1a}
+
+m1 <- glmer(seeds~genon+sex+o_month+(1|ring)+(1|season)+(1|RowID),data=feed4,family = poisson) 
+summary(m1)
+```
+
+
+<br><br>
+Now test if there is a genotype effect, but one that varies over seasons. I'll include season as a random effect, and and run two models - one that allows the genotype effect to vary with season, and one that doesn't. Then compare the two using a likelihood ratio test.
+
+```{r M2, warning = F}
+m1 <- glmer(seeds~genon+sex+o_month+(1|ring)+(genon|season)+(1|RowID),data=feed3,family = poisson) #'interaction' model
+
+#Hasn't converged - try a different optimizer
+ss <- getME(m1,c("theta","fixef"))
+m3 <- update(m1,start=ss,control=glmerControl(optimizer="bobyqa",
+                            optCtrl=list(maxfun=2e5)))
+
+m2 <- glmer(seeds~genon+sex+o_month+(1|ring)+(1|season)+(1|RowID),data=feed3,family = poisson) #Null model
+
+#LRT
+anova(m1,m2)
+
+
+```
+
+<br><br>
+Note that this effect holds (in fact it's stronger) if we just use the recent data:
+
+```{r M3}
+
+m1 <- glmer(seeds~genon+sex+o_month+(1|ring)+(genon|season)+(1|RowID),data=feed4,family = poisson) 
+m2 <- glmer(seeds~genon+sex+o_month+(1|ring)+(1|season)+(1|RowID),data=feed4,family = poisson)
+
+anova(m1,m2)
+```
+

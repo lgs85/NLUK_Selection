@@ -163,7 +163,7 @@ write.csv(lrs, 'NLUK_Lifetime_reproductive_success_and_genotype.csv',row.names =
 
 # Genotype and feeding behaviour ------------------------------------------
 feedx <- rbind(feed710[,2:5],feed1115[,2:5])
-
+feedx <- feed710
 
 
 feedx$month <- as.numeric(sapply(feedx$date,function(x) strsplit(x,split = '-')[[1]][2]))
@@ -194,7 +194,7 @@ feed2$censeeds <- log(feed2$seeds)-tapply(feed2$seeds,feed2$season,function(x) m
 
 
 
-feed2$rate <- with(feed2,seeds/recs)
+feed2$rate <- with(feed2,lm(seeds~recs)$residuals)
 
 head(feed2) 
 
@@ -222,12 +222,12 @@ confint.merMod(m1)
 temp <- ddply(feed2,
               .(ring,season,geno,genon),
               summarise,
-              recs = mean(cenrecs),
-              seeds = mean(censeeds),
-              rate = mean(rate),
+              recs = median(cenrecs),
+              seeds = median(censeeds),
+              rate = median(rate),
+              month = mean(month),
               n= length(cenrecs))
 
-hist(temp$n,breaks = 100)
 
 temp <- subset(temp,recs > -1.5)
 
@@ -237,23 +237,21 @@ anova(lm(recs~genon+season,data=temp))
 
 ggplot(temp,aes(x = season, y = recs,fill = geno))+
   geom_jitter(aes(col = geno),position = position_jitterdodge(jitter.width = 0.2))+
-  geom_boxplot(notch=F,alpha = 0,col = 'black',outlier.colour = NA)+
+  geom_boxplot(notch=T,alpha = 0,col = 'black',outlier.colour = NA)+
   theme_bw()
 
-ggplot(temp,aes(x = season, y = seeds,fill = geno))+
-  geom_jitter(aes(col = geno),position = position_jitterdodge(jitter.width = 0.2))+
-  geom_boxplot(notch=F,alpha = 0,col = 'black',outlier.colour = NA)+
-  theme_bw()
-
-ggplot(temp,aes(x = recs, y = seeds,col = geno))+
-  geom_point()+
+ggplot(temp,aes(x = genon, y = recs,col = season,fill = season))+
+  geom_point(col = 'white')+
   stat_smooth(method = 'lm')+
   theme_bw()
 
 
+temp2 <- subset(feed2,geno == 'CC')
 
 
 
+hist(log(temp2$recs))
 
+temp2
 
 
