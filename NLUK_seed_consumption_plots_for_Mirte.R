@@ -6,7 +6,7 @@ library(ggplot2)
 library(Rmisc)
 
 dd <- read.csv('NLUK_seed_consumption_genotype.csv')
-
+reprod <- read.csv('NLUK_Reproductive_success_and_genotype.csv')
 
 # Get total seed consumption per season for each bird ---------------------
 
@@ -38,4 +38,15 @@ FigC <- ggplot(totals,aes(x = season, y = totalseeds,fill = geno))+
   theme_bw()
 
 multiplot(FigA,FigB,FigC)
+
+
+
+
+
+
+
+#NEED TO LOOK AT REPRODUCTIVE SUCCESS, FEEDING AND GENOTYPE
+inboth <- intersect(totals$ring,reprod$Ring)
+
+
 
