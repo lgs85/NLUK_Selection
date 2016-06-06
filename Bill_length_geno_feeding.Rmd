@@ -88,6 +88,18 @@ totals <- ddply(feed3,
 totals <- subset(totals,totalseeds<3000)
 totals$seedsperday <- totals$totalseeds/totals$ndays
 
+totals2 <- ddply(feed3,
+              .(ring,geno,genon,haplosum,sex),
+              summarise,
+              totalseeds = sum(seeds),
+              month = mean(o_month),
+              ndays= length(seeds))
+
+totals2$seedsperday <- totals2$totalseeds/totals2$ndays
+
+
+write.csv(feed3,'NLUK_seed_consumption_genotype.csv',row.names = F)
+
 ```
 
 
@@ -198,8 +210,11 @@ summary(m3)$tTable
 Number of days seen at the feeder - higher in males and significant effect of genotype.
 ```{r M4}
 #Number of days visited feeder
-m4 <- lme(log(ndays)~genon+sex+month,data=totals,random = ~1|season)
+m4 <- lme(log(ndays)~genon+sex+month,data=totals,random = ~1|ring)
 summary(m4)$tTable
+
+plot(m4)
+
 ```
 
 

@@ -6,6 +6,7 @@ library(glmmADMB)
 
 dd <- read.csv('NLUK_genotypes_and_bill_length.csv')
 dd1 <- read.csv('NLUK_Reproductive_success_and_genotype.csv')
+wsurv <- read.csv('Wytham_survival.csv',colClasses = 'character')
 
 dd1$Year <- factor(dd1$Year)
 
@@ -16,7 +17,8 @@ dd1$Year <- factor(dd1$Year)
 
 #Plot Bill length vs genotype for both pops
 ggplot(dd,aes(x = geno,y = BillLength,fill = Pop))+
-  geom_boxplot()+
+  geom_boxplot(alpha = 0.2)+
+  geom_jitter(aes(col = Pop),position = position_jitterdodge(jitter.width = 0.2))+
   theme_classic()+
   theme(        axis.line.x = element_line(colour = 'black'),
                 axis.line.y = element_line(colour = 'black'),
@@ -82,6 +84,36 @@ summary(m3) #Interaction significant - so it's the number of fledglings, not a p
 
 
 
+#Rough look at survival
+inboth <- intersect(wsurv$ID,dd1$Ring)
 
-tapply(dd$BillLength,list(dd$geno,dd$Ringer),length)
+ddx <- subset(subset(dd1,!duplicated(Ring)),Ring %in% inboth)
+temp <- subset(wsurv,ID %in% inboth)
 
+ddx <- ddx[order(ddx$Ring),]
+wsurv2 <- temp[order(temp$ID),]
+
+wsurv2$geno <- ddx$geno
+
+temp <- as.matrix(wsurv2[,3:25])
+
+x <- temp[1,]
+
+mysurv <- function(x)
+{
+  alives <- which(x == '1')
+ return( max(alives)-min(alives) )
+}
+
+
+
+wsurv2$rsurv <- apply(temp,1,mysurv)
+
+boxplot(rsurv~geno,data = wsurv2)
+
+wsurv2$genon <- as.numeric(wsurv2$geno)
+
+summary(glm(rsurv~genon,data = wsurv2,family = 'poisson'))
+
+ggplot(wsurv2,aes(x = rsurv, col = geno))+
+  geom_density()
