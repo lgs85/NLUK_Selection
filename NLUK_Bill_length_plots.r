@@ -50,6 +50,19 @@ ggplot(dd1,aes(x = geno,y = N_Fledglings,fill = Pop))+
   scale_fill_manual(values = c('gold','darkgrey','black'))
 
 
+#As density plots
+ggplot(subset(dd1,geno == 'CC'),aes(fill = Pop,x = N_Fledglings))+
+  geom_density(alpha = 0.2)+
+  theme_classic()+
+  theme(        axis.line.x = element_line(colour = 'black'),
+                axis.line.y = element_line(colour = 'black'))+
+  ylab('Number of fledglings')+
+  xlab('Genotype')+
+  scale_colour_manual(values = c('gold','darkgrey','black'))+
+  scale_fill_manual(values = c('gold','darkgrey','black'))
+
+
+
 #MODELS - warning, these are fairly slow
 
 #Look at the N_Fledglings data
@@ -80,40 +93,3 @@ m3 <- glmmadmb(N_Fledglings~Sex + as.numeric(geno)*Pop + (1|Year) + (1|BirdID),
 summary(m3) #Interaction significant - so it's the number of fledglings, not a presence/absence effect
 
 
-
-
-
-
-#Rough look at survival
-inboth <- intersect(wsurv$ID,dd1$Ring)
-
-ddx <- subset(subset(dd1,!duplicated(Ring)),Ring %in% inboth)
-temp <- subset(wsurv,ID %in% inboth)
-
-ddx <- ddx[order(ddx$Ring),]
-wsurv2 <- temp[order(temp$ID),]
-
-wsurv2$geno <- ddx$geno
-
-temp <- as.matrix(wsurv2[,3:25])
-
-x <- temp[1,]
-
-mysurv <- function(x)
-{
-  alives <- which(x == '1')
- return( max(alives)-min(alives) )
-}
-
-
-
-wsurv2$rsurv <- apply(temp,1,mysurv)
-
-boxplot(rsurv~geno,data = wsurv2)
-
-wsurv2$genon <- as.numeric(wsurv2$geno)
-
-summary(glm(rsurv~genon,data = wsurv2,family = 'poisson'))
-
-ggplot(wsurv2,aes(x = rsurv, col = geno))+
-  geom_density()
