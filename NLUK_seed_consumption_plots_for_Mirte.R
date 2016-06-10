@@ -2,8 +2,10 @@ rm(list=ls())
 
 library(plyr)
 library(nlme)
+library(lme4)
 library(ggplot2)
 library(Rmisc)
+library(arm)
 
 dd <- read.csv('NLUK_seed_consumption_genotype.csv')
 reprod <- read.csv('NLUK_Reproductive_success_and_genotype.csv')
@@ -44,9 +46,24 @@ multiplot(FigA,FigB,FigC)
 
 
 
-
 #NEED TO LOOK AT REPRODUCTIVE SUCCESS, FEEDING AND GENOTYPE
-inboth <- intersect(totals$ring,reprod$Ring)
+reprod$ryear <- with(reprod,paste(Ring,Year))
+totals$fyear <- with(totals,paste(ring,substring(season,6)))
+
+inboth <- intersect(reprod$ryear,totals$fyear)
+
+reprod2 <- subset(subset(reprod,ryear %in% inboth),!duplicated(ryear))
+totals2 <- subset(totals,fyear %in% inboth)
+
+reprod2 <- reprod2[order(reprod2$ryear),]
+totals2 <- totals2[order(totals2$fyear),]
+
+totals2$N_Fledglings <- reprod2$N_Fledglings
+
+
+ggplot(totals2,aes(y = N_Fledglings, x = totalseeds,col = geno))+
+         geom_point()+
+         stat_smooth(method = 'lm')
 
 
 

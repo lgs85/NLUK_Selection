@@ -50,9 +50,16 @@ ggplot(dd1,aes(x = geno,y = N_Fledglings,fill = Pop))+
   scale_fill_manual(values = c('gold','darkgrey','black'))
 
 
-#As density plots
-ggplot(subset(dd1,geno == 'CC'),aes(fill = Pop,x = N_Fledglings))+
-  geom_density(alpha = 0.2)+
+dd1 <- subset(dd1,(!(is.na(N_Fledglings))))
+m1 <- glmmadmb(N_Fledglings~Sex+(1|Year),
+               family = 'gaussian', #Also tried running with poisson - still significant
+               data=dd1,
+               zeroInflation = TRUE)
+
+dd1$CF <- m1$residuals
+
+ggplot(dd1,aes(x = geno,y = CF,fill = Pop))+
+  geom_boxplot(notch=T)+
   theme_classic()+
   theme(        axis.line.x = element_line(colour = 'black'),
                 axis.line.y = element_line(colour = 'black'))+
@@ -62,7 +69,6 @@ ggplot(subset(dd1,geno == 'CC'),aes(fill = Pop,x = N_Fledglings))+
   scale_fill_manual(values = c('gold','darkgrey','black'))
 
 
-
 #MODELS - warning, these are fairly slow
 
 #Look at the N_Fledglings data
@@ -70,7 +76,7 @@ ggplot(subset(dd1,geno == 'CC'),aes(fill = Pop,x = N_Fledglings))+
 hist(dd1$N_Fledglings) #Looks like a normal distribution with zero inflation.
 
 #Zero inflated model for Number of Fledglings
-dd1 <- subset(dd1,(!(is.na(N_Fledglings))))
+
 m1 <- glmmadmb(N_Fledglings~Sex+as.numeric(geno)*Pop+(1|Year)+(1|BirdID),
                family = 'gaussian', #Also tried running with poisson - still significant
                data=dd1,
