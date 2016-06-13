@@ -65,8 +65,8 @@ ggplot(temp,aes(x = geno,y = Bill,col = Pop))+
 # Genotype and Number of fledglings ---------------------------------------
 
 #Plot Fledglings vs genotype for both pops
-ggplot(dd1,aes(x = geno,y = N_Fledglings,fill = Pop))+
-  geom_boxplot(notch=T)+
+ggplot(subset(dd1,N_Fledglings>0),aes(x = geno,y = N_Fledglings,fill = Pop))+
+  geom_boxplot()+
   theme_classic()+
   theme(        axis.line.x = element_line(colour = 'black'),
                 axis.line.y = element_line(colour = 'black'))+

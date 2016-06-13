@@ -62,6 +62,14 @@ ggplot(temp,aes(x = geno,y = NF))+
   scale_fill_manual(values = c('gold','darkgrey'))
 
 
+m1 <- lme(log(totalseeds)~genon+sex+month,random = ~1|season,data=totals)
+summary(m1)
+
+m1 <- lme((seedsperday)~genon+sex+month,random = ~1|season,data=totals)
+summary(m1)
+
+m1 <- lme(log(ndays)~genon+sex+month,random = ~1|season,data=totals)
+summary(m1)
 
 
 #NEED TO LOOK AT REPRODUCTIVE SUCCESS, FEEDING AND GENOTYPE
