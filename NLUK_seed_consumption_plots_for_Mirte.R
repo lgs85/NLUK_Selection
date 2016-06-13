@@ -42,6 +42,24 @@ FigC <- ggplot(totals,aes(x = season, y = totalseeds,fill = geno))+
 multiplot(FigA,FigB,FigC)
 
 
+se <- function(x) sd(x)/(sqrt(length(x)))
+temp <- ddply(totals,
+              .(geno),
+              summarise,
+              NF = mean(totalseeds),
+              NFSE = se(totalseeds))
+
+ggplot(temp,aes(x = geno,y = NF))+
+  geom_point()+
+  geom_errorbar(aes(ymax = NF+NFSE,ymin = NF-NFSE),width = 0.25)+
+  theme_classic()+
+  theme(        axis.line.x = element_line(colour = 'black'),
+                axis.line.y = element_line(colour = 'black'),
+                legend.title = element_blank())+
+  ylab('Seeds consumed')+
+  xlab('Genotype')+
+  scale_colour_manual(values = c('gold','darkgrey'))+
+  scale_fill_manual(values = c('gold','darkgrey'))
 
 
 

@@ -36,6 +36,32 @@ summary(lm(BillLength~geno_n+Pop+Sex,data=dd))
 
 
 
+
+#Error bar Plot Bill length vs genotype for both pops
+
+
+temp <- ddply(dd,
+              .(geno,Pop),
+              summarise,
+              Bill = mean(BillLength),
+              BillSE = se(BillLength))
+
+ggplot(temp,aes(x = geno,y = Bill,col = Pop))+
+  geom_point(position = position_dodge(width = 0.6))+
+  geom_errorbar(position = position_dodge(width = 0.6),aes(ymax = Bill+BillSE,ymin = Bill-BillSE))+
+  theme_classic()+
+  theme(        axis.line.x = element_line(colour = 'black'),
+                axis.line.y = element_line(colour = 'black'),
+                legend.title = element_blank())+
+  ylab('Bill length (mm)')+
+  xlab('Genotype')+
+  scale_colour_manual(values = c('gold','darkgrey'))+
+  scale_fill_manual(values = c('gold','darkgrey'))
+
+
+
+
+
 # Genotype and Number of fledglings ---------------------------------------
 
 #Plot Fledglings vs genotype for both pops
@@ -67,6 +93,32 @@ ggplot(dd1,aes(x = geno,y = CF,fill = Pop))+
   xlab('Genotype')+
   scale_colour_manual(values = c('gold','darkgrey','black'))+
   scale_fill_manual(values = c('gold','darkgrey','black'))
+
+
+
+
+
+temp <- ddply(dd1,
+              .(geno,Pop),
+              summarise,
+              NF = mean(NF2),
+              NFSE = se(NF2))
+
+ggplot(temp,aes(x = geno,y = NF,col = Pop))+
+  geom_point(position = position_dodge(width = 0.6))+
+  geom_errorbar(position = position_dodge(width = 0.6),aes(ymax = NF+NFSE,ymin = NF-NFSE))+
+  theme_classic()+
+  theme(        axis.line.x = element_line(colour = 'black'),
+                axis.line.y = element_line(colour = 'black'),
+                legend.title = element_blank())+
+  ylab('Number of fledglings')+
+  xlab('Genotype')+
+  scale_colour_manual(values = c('gold','darkgrey'))+
+  scale_fill_manual(values = c('gold','darkgrey'))
+
+
+
+
 
 
 #MODELS - warning, these are fairly slow
