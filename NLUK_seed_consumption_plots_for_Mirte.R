@@ -24,44 +24,19 @@ totals$seedsperday <- totals$totalseeds/totals$ndays
 
 # Plot seed consumption and number of visits against genotype -------------
 
-FigA <- ggplot(totals,aes(x = season, y = seedsperday,fill = geno))+
-  geom_jitter(aes(col = geno),position = position_jitterdodge(jitter.width = 0.2),shape = 1)+
-  geom_boxplot(alpha = 0,outlier.colour = NA,coef = 0)+
-  theme_bw()
-
-FigB <- ggplot(totals,aes(x = season, y = ndays,fill = geno))+
-  geom_jitter(aes(col = geno),position = position_jitterdodge(jitter.width = 0.2),shape = 1)+
-  geom_boxplot(alpha = 0,outlier.colour = NA,coef = 0)+
-  theme_bw()
-
-FigC <- ggplot(totals,aes(x = season, y = totalseeds,fill = geno))+
-  geom_jitter(aes(col = geno),position = position_jitterdodge(jitter.width = 0.2),shape = 1)+
-  geom_boxplot(alpha = 0,outlier.colour = NA,coef = 0)+
-  theme_bw()
-
-multiplot(FigA,FigB,FigC)
-
-
-se <- function(x) sd(x)/(sqrt(length(x)))
-temp <- ddply(totals,
-              .(geno),
-              summarise,
-              NF = mean(totalseeds),
-              NFSE = se(totalseeds))
-
-ggplot(temp,aes(x = geno,y = NF))+
-  geom_point()+
-  geom_errorbar(aes(ymax = NF+NFSE,ymin = NF-NFSE),width = 0.25)+
+ggplot(totals,aes(x = as.numeric(geno), y = log10(totalseeds)))+
+  stat_smooth(method = 'lm',col = 'darkgrey')+
   theme_classic()+
   theme(        axis.line.x = element_line(colour = 'black'),
                 axis.line.y = element_line(colour = 'black'),
                 legend.title = element_blank())+
-  ylab('Seeds consumed')+
-  xlab('Genotype')+
-  scale_colour_manual(values = c('gold','darkgrey'))+
-  scale_fill_manual(values = c('gold','darkgrey'))
+  ylab('log10(seeds consumed)')+
+  xlab('Number of copies of long-billed allele')+
+  scale_x_continuous(breaks = c(1:3),labels = c(0:2))
 
 
+
+#Models
 m1 <- lme(log(totalseeds)~genon+sex+month,random = ~1|season,data=totals)
 summary(m1)
 
@@ -70,26 +45,5 @@ summary(m1)
 
 m1 <- lme(log(ndays)~genon+sex+month,random = ~1|season,data=totals)
 summary(m1)
-
-
-#NEED TO LOOK AT REPRODUCTIVE SUCCESS, FEEDING AND GENOTYPE
-reprod$ryear <- with(reprod,paste(Ring,Year))
-totals$fyear <- with(totals,paste(ring,substring(season,6)))
-
-inboth <- intersect(reprod$ryear,totals$fyear)
-
-reprod2 <- subset(subset(reprod,ryear %in% inboth),!duplicated(ryear))
-totals2 <- subset(totals,fyear %in% inboth)
-
-reprod2 <- reprod2[order(reprod2$ryear),]
-totals2 <- totals2[order(totals2$fyear),]
-
-totals2$N_Fledglings <- reprod2$N_Fledglings
-
-
-ggplot(totals2,aes(y = N_Fledglings, x = totalseeds,col = geno))+
-         geom_point()+
-         stat_smooth(method = 'lm')
-
 
 
