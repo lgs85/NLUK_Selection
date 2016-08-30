@@ -67,31 +67,38 @@ for(i in 1:length(uhaps))
 
 t1 <- cbind(uhaps,estimates,pvals)
 
+df = 2*length(pvals)
+pchisq( -2*sum(log(pvals)), df, lower.tail=FALSE)
+
 
 sigs <- data.frame(subset(t1,as.numeric(pvals)<0.05))
 sigs$L95 <- NA
 sigs$U95 <- NA
+sigs$LP <- NA
+sigs$UP <- NA
 
 nreps = 1000
 
 for(i in 1:nrow(sigs))
 {
   t_out <- rep(NA,nreps)
-  cd <- subset(temp,hapID == sigs$uhaps[i])
+  p_out <- rep(NA,nreps)
+  cd <- subset(temp,hapID == paste(sigs$uhaps[i]))
   for(j in 1:nreps)
   {
-    cd$N_Fledglings <- cd$N_Fledglings[sample(1:length(cd$N_Fledglings)),cd$N_Fledglings,replace = F]
+    cd$N_Fledglings <- cd$N_Fledglings[sample(c(1:length(cd$N_Fledglings)),length(cd$N_Fledglings),replace = F)]
     m1 <- summary(glm(N_Fledglings~nhaps,data = cd,family = 'poisson'))
     t_out[j] <- m1$coefficients[2,1]
+    p_out[j] <- m1$coefficients[2,4]
   }
   sigs$U95[i] <- quantile(t_out,0.95)
   sigs$L95[i] <- quantile(t_out,0.05)
+  sigs$UP[i] <- quantile(p_out,0.95)
+  sigs$LP[i] <- quantile(p_out,0.05)
 }
 
+sigs
 
-df = 2*length(pvals)
-
-pchisq( -2*sum(log(pvals)), df, lower.tail=FALSE)
 
 
 
