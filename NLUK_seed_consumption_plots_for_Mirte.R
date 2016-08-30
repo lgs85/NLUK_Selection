@@ -68,9 +68,25 @@ for(i in 1:length(uhaps))
 t1 <- cbind(uhaps,estimates,pvals)
 
 
-sigs <- subset(t1,as.numeric(pvals)<0.05)
+sigs <- data.frame(subset(t1,as.numeric(pvals)<0.05))
+sigs$L95 <- NA
+sigs$U95 <- NA
 
 nreps = 1000
+
+for(i in 1:nrow(sigs))
+{
+  t_out <- rep(NA,nreps)
+  cd <- subset(temp,hapID == sigs$uhaps[i])
+  for(j in 1:nreps)
+  {
+    cd$N_Fledglings <- cd$N_Fledglings[sample(1:length(cd$N_Fledglings)),cd$N_Fledglings,replace = F]
+    m1 <- summary(glm(N_Fledglings~nhaps,data = cd,family = 'poisson'))
+    t_out[j] <- m1$coefficients[2,1]
+  }
+  sigs$U95[i] <- quantile(t_out,0.95)
+  sigs$L95[i] <- quantile(t_out,0.05)
+}
 
 
 df = 2*length(pvals)
