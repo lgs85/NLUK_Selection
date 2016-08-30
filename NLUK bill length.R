@@ -144,6 +144,13 @@ rs$PopSex <- ifelse(rs$Pop == 'UK',
                            'UK (females)'),
                     'NL (females)')
 
+rs$BirdID
+geno1$V2
+
+
+
+temp <- fread('../NLUK_Selection2/NLUKAUTUnrel.fam')
+rs <- subset(rs,BirdID %in% temp$V2)
 
 write.csv(rs, 'NLUK_Reproductive_success_and_genotype.csv',row.names =  F)
 
