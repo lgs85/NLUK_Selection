@@ -51,7 +51,18 @@ temp <- data.frame(nhaps = unlist(myhaps),
 ggplot(temp,aes(x = nhaps, y = (N_Fledglings),col = hapID))+
   stat_smooth(method = 'lm',se = F)
 
+pcx <- princomp(myhaps)
+reprod$hpc1 <- pcx$scores[,2]
 
+ggplot(subset(reprod,N_Fledglings>-10),aes(x = hpc1,y = N_Fledglings))+
+  geom_point()+
+         stat_smooth(method = 'lm')
+
+reprod$NFL <- ifelse(reprod$N_Fledglings>0,'y','n')
+ggplot(reprod,aes(y = hpc1,x = NFL))+
+  geom_boxplot()
+
+summary(glm(N_Fledglings~hpc1,data=reprod,family = 'poisson'))
 
 uhaps <- as.character(unique(temp$hapID))
 estimates <- rep(NA,length(uhaps))
